@@ -78,12 +78,12 @@ int main() {
     State state;
     PhysicsInputs inputs;
 
- std::vector<float> polynomial = {1.0f, 0.0f, 0.0f}; // y = x^2
+ std::vector<float> polynomial = {1.0f, -2.0f, 0.0f}; // Represents the curve y = x^2
 // initial velocity
     state.velocity = 0.5f;
 
 // starting position based on curve y = x^2
-    state.positionVector.x = 1.0f;
+    state.positionVector.x = 0.0f;
     state.positionVector.y = height(state.positionVector.x, polynomial);
 
 
