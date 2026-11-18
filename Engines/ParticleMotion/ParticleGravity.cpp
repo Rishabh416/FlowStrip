@@ -2,8 +2,7 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-
-// cmd /c 'call "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" && cl /EHsc /std:c++14 /Tp"Physics Engine" /Fe:PhysicsEngine.exe && PhysicsEngine.exe'
+#include <stdexcept> // NEW_CODE
 
 struct Vector2{
     float x = 0.0f;
@@ -46,7 +45,8 @@ void update(State& state, const PhysicsInputs& inputs, float dt, const std::vect
 float slope = slopeAt(state.positionVector.x, polynomial);
 float angle = std::atan(slope);
 
-//calculation for friction
+// calculation for friction
+// adjust normal force for curves with varying curvature
      float friction = inputs.frictioncoefficient * (inputs.mass * inputs.gravity * std::cos(angle));
 
 //calculation for acceleration
@@ -57,6 +57,7 @@ float angle = std::atan(slope);
 
 
 //update velocity
+    state.velocity += gravityacceleration * dt;
 
     if(state.velocity > 0.0f){
         state.velocity = std::max(0.0f, state.velocity - frictionacceleration * dt);
@@ -81,7 +82,7 @@ int main() {
     State state;
     PhysicsInputs inputs;
 
- std::vector<float> polynomial = {1.0f, -2.0f, 0.0f}; // Represents the curve y = x^2
+ std::vector<float> polynomial = {1.0f, 0.0f, 0.0f}; // Represents the curve y = x^2
 // initial velocity
     state.velocity = 0.5f;
 
