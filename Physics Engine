@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <vector>
 
+// cmd /c 'call "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" && cl /EHsc /std:c++14 /Tp"Physics Engine" /Fe:PhysicsEngine.exe && PhysicsEngine.exe'
+
 struct Vector2{
     float x = 0.0f;
     float y = 0.0f;
@@ -28,7 +30,8 @@ float height(float x, const std::vector<float>& polynomial){
         return result;
     }
 
-float slopeAt( float x, const std::vector<float>& polynomial){
+float slopeAt(
+    float x, const std::vector<float>& polynomial){
     float result = 0.0f;
     int degree = static_cast<int>(polynomial.size()) - 1;
     
@@ -55,14 +58,14 @@ float angle = std::atan(slope);
 
 //update velocity
 
-    state.velocity += gravityacceleration * dt;
-
     if(state.velocity > 0.0f){
         state.velocity = std::max(0.0f, state.velocity - frictionacceleration * dt);
     }
     else if(state.velocity < 0.0f){
         state.velocity = std::min(0.0f, state.velocity + frictionacceleration * dt);
     }
+
+    state.velocity += gravityacceleration * dt;
 
 //update position
    float distance = state.velocity * dt;
@@ -90,16 +93,18 @@ int main() {
     inputs.frictioncoefficient = 0.05f;
     inputs.mass = 0.2f;
     inputs.gravity = 9.81f;
-    const float dt = 0.01f; // time step (seconds)
+    const float dt = 0.02f; // time step (seconds)
    
     
     for(int i = 0; i < 1000; ++i){
         update(state, inputs, dt, polynomial);
     
-        std::cout << "Position" << state.position << "m"
-            << "Velocity" << state.velocity << "m/s"
-            << "X Position" << state.positionVector.x << "m"
-            << "Y Position" << state.positionVector.y << "m"
+        std::cout 
+        //     << "Position" << state.position << "m"
+        //     << "Velocity" << state.velocity << "m/s"
+            << "X Position " << state.positionVector.x << " m"
+        //     << "Y Position" << state.positionVector.y << "m"
+        //     << "Total Energy" << (0.5*inputs.mass*state.velocity*state.velocity)+(inputs.mass*9.81*state.positionVector.y) << "J"
             << "\n";
     }
     
