@@ -2,10 +2,12 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+
 struct Vector2{
     float x = 0.0f;
     float y = 0.0f;
 };
+
 struct State{
     float position = 0.0f; // distance along track (meters)
     float velocity = 0.0f; // speed along track (meters/second)
@@ -14,7 +16,7 @@ struct State{
 
 struct PhysicsInputs{
     float gravity = 9.81f; // acceleration due to gravity (meters/second^2)
-    float frictioncoefficient = 0.0f; // friction coefficient 
+    float frictioncoefficient = 0.05f; // friction coefficient 
     float mass = 0.2f; // mass of the object (kilograms)
     };
 
@@ -81,11 +83,11 @@ int main() {
     state.velocity = 0.5f;
 
 // starting position based on curve y = x^2
-    state.positionVector.x = 0.0f;
+    state.positionVector.x = 1.0f;
     state.positionVector.y = height(state.positionVector.x, polynomial);
 
 
-    inputs.frictioncoefficient = 0.4f;
+    inputs.frictioncoefficient = 0.05f;
     inputs.mass = 0.2f;
     inputs.gravity = 9.81f;
     const float dt = 0.01f; // time step (seconds)
