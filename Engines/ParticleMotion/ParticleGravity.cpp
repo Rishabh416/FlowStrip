@@ -2,7 +2,7 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-#include <stdexcept> // NEW_CODE
+#include <stdexcept>
 
 struct Vector2{
     float x = 0.0f;
