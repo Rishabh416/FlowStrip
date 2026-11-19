@@ -1,0 +1,86 @@
+#include <Wire.h>
+#include <SparkFunLSM6DSO.h>
+LSM6DSO imu1;
+LSM6DSO imu2;
+
+const float SEGMENT_LENGTH = 11.0;
+
+// Complementary filter variables (stored in degrees for SparkFun library)
+float angle1 = 0.0;
+float angle2 = 0.0;
+unsigned long lastTime = 0;
+const float ALPHA = 0.96; // 96% gyroscope, 4% accelerometer
+
+void setup() {
+Serial.begin(115200);
+  while (!Serial) delay(10);
+
+  Wire1.begin(); // Qwiic connector
+  Wire.begin(); // wire connections
+  Wire1.setClock(100000);
+
+  // Initialize imu1
+  if (!imu1.begin(0x6B, Wire1)) {
+    Serial.println("LSM6DSO 1 not detected! Check your Qwiic cable.");
+    while (1);
+  }  
+  imu1.initialize(BASIC_SETTINGS);
+  Serial.println("LSM6DSO 1 connected and ready!");
+
+
+  // intialize imu2
+  if (!imu2.begin(0x6B, Wire)) {
+    Serial.println("LSM6DSO 2 not detected! Check your wires.");
+    while (1);
+  }
+  imu2.initialize(BASIC_SETTINGS);
+  Serial.println("LSM6DSO 2 connected and ready!");
+}
+
+void loop() {
+  // Calculate elapsed time (dt) in seconds
+  unsigned long currentTime = micros();
+  float dt = (currentTime - lastTime) / 1000000.0;
+  lastTime = currentTime;
+
+  // IMU 1 acceleration and gyroscope readings
+  float ax1 = imu1.readFloatAccelX();
+  float ay1 = imu1.readFloatAccelY();
+  float az1 = imu1.readFloatAccelZ();
+  float gy1 = imu1.readFloatGyroY();
+
+  // IMU 2 acceleration and gyroscope readings
+  float ax2 = imu2.readFloatAccelX();
+  float ay2 = imu2.readFloatAccelY();
+  float az2 = imu2.readFloatAccelZ();
+  float gy2 = imu2.readFloatGyroY();
+
+  // Calculate pitch angle from accelerometer (convert radians to degrees)
+  float accelAngle1 = atan2(-ax1, sqrt(ay1 * ay1 + az1 * az1)) * 180.0 / PI;
+  float accelAngle2 = atan2(-ax2, sqrt(ay2 * ay2 + az2 * az2)) * 180.0 / PI;
+
+  // Fuse accelerometer angle with gyroscope rate (both in degrees)
+  angle1 = ALPHA * (angle1 + gy1 * dt) + (1.0 - ALPHA) * accelAngle1;
+  angle2 = ALPHA * (angle2 + gy2 * dt) + (1.0 - ALPHA) * accelAngle2;
+
+  // Convert degrees back to radians for sin() and cos() curve math
+  float rad1 = angle1 * PI / 180.0;
+  float rad2 = angle2 * PI / 180.0;
+
+  // Point (x1, y1) is your single peak/vertex
+  float x1 = SEGMENT_LENGTH * cos(rad1);
+  float y1 = SEGMENT_LENGTH * sin(rad1);
+
+  // Point (x2, y2) is the free end of the string
+  float x2 = x1 + SEGMENT_LENGTH * cos(rad2);
+  float y2 = y1 + SEGMENT_LENGTH * sin(rad2);
+
+  // Print angles and curve coordinates
+  Serial.print("Angle1: "); Serial.print(angle1, 1);
+  Serial.print(" deg | Angle2: "); Serial.print(angle2, 1);
+  Serial.print(" deg || Peak(x1,y1): ("); Serial.print(x1, 1); Serial.print(", "); Serial.print(y1, 1);
+  Serial.print(") | Tip(x2,y2): ("); Serial.print(x2, 1); Serial.print(", "); Serial.print(y2, 1);
+  Serial.println(")");
+
+  delay(20); // ~50Hz update rate
+}
