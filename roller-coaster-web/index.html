@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Roller Coaster Physics</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h1>Roller Coaster Physics</h1>
+
+  <label for="type">Physics type:</label>
+  <select id="type">
+    <option value="momentum">Momentum</option>
+    <option value="velocity">Velocity</option>
+  </select>
+
+  <br><br>
+
+  <label for="photo">Track photo:</label>
+  <input type="file" id="photo" accept="image/*">
+
+  <br><br>
+
+  <button id="uploadBtn">Upload</button>
+
+  <p id="msg">Ready.</p>
+
+  <div style="max-width: 600px;">
+    <canvas id="curveChart"></canvas>
+  </div>
+
+  <script>
+    const sb = supabase.createClient('https://vsnafdnhunahpuyvkgmw.supabase.co', 'sb_publishable_VHX402pVBC-2Fkj2YacFug_pdWmXW_R');
+
+    const typeInput = document.getElementById('type');
+    const photoInput = document.getElementById('photo');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const msg = document.getElementById('msg');
+    const canvas = document.getElementById('curveChart');
+
+    let chart = null;
+    let runCount = 0;
+
+    function drawCurve(points) {
+      const chartPoints = points.map(p => ({ x: p[0], y: p[1] }));
+
+      if (chart) {
+        chart.destroy();
+      }
+
+      chart = new Chart(canvas, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'Detected curve',
+            data: chartPoints,
+            showLine: true
+          }]
+        }
+      });
+    }
+
+    function listenForCurve(runId) {
+      sb.channel('run-' + runId)
+        .on('postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'runs', filter: 'id=eq.' + runId },
+          (payload) => {
+            const updatedRow = payload.new;
+
+            if (updatedRow.status === 'processing') {
+              msg.textContent = 'The Pi is detecting the curve...';
+            }
+
+            if (updatedRow.status === 'done' && updatedRow.curve) {
+              msg.textContent = 'Curve ready!';
+              drawCurve(updatedRow.curve);
+            }
+          })
+        .subscribe();
+    }
+
+    uploadBtn.addEventListener('click', async () => {
+      const file = photoInput.files[0];
+
+      if (!file) {
+        msg.textContent = 'Please choose a photo first.';
+        return;
+      }
+
+      msg.textContent = 'Uploading photo...';
+
+      const extension = file.name.split('.').pop();
+      const path = Date.now() + '.' + extension;
+
+      const { error: uploadError } = await sb.storage.from('photos').upload(path, file);
+      if (uploadError) {
+        msg.textContent = 'Photo upload error: ' + uploadError.message;
+        return;
+      }
+
+      const { data: row, error: insertError } = await sb
+        .from('runs')
+        .insert({ type: typeInput.value, photo_url: path })
+        .select()
+        .single();
+
+      if (insertError) {
+        msg.textContent = 'Database error: ' + insertError.message;
+        return;
+      }
+
+      runCount = runCount + 1;
+      msg.textContent = 'Uploaded! Run #' + runCount + ' is waiting for the Pi.';
+      listenForCurve(row.id);
+    });
+  </script>
+</body>
+</html>
