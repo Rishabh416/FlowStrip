@@ -31,3 +31,4 @@ A list of [x, y] points, e.g.
 ## Running the website locally
 Open the folder in VS Code and use Live Server on `index.html`.
 
+
