@@ -20,8 +20,10 @@ Backend: Supabase (database + photo storage + live updates).
 | status | `"uploaded"` → `"processing"` → `"done"` | website, then Pi |
 
 ## Curve format
-A list of [x, y] points, e.g.
-`[[0,0],[0.25,0.6],[0.5,0.2],[0.75,0.8],[1,0.1]]`
+- `curve`: polynomial coefficients in pixel coordinates, highest power first
+  (same order as numpy.polyfit). Example: [0.001, -1.2, 600]
+- `x_min`, `x_max`: the pixel range where the strip starts and ends in the photo
+- Pixel y increases downward; the website flips the y axis to match the photo.
 
 ## Supabase connection
 - Project URL: https://vsnafdnhunahpuyvkgmw.supabase.co
@@ -30,5 +32,6 @@ A list of [x, y] points, e.g.
 
 ## Running the website locally
 Open the folder in VS Code and use Live Server on `index.html`.
+
 
 
