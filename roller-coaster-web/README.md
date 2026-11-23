@@ -1,4 +1,4 @@
-# IoT Web App (Ishita)
+# IoT Web App
 
 Website for choosing a physics type, uploading a track photo, and displaying the detected curve.
 Backend: Supabase (database + photo storage + live updates).
@@ -30,3 +30,4 @@ A list of [x, y] points, e.g.
 
 ## Running the website locally
 Open the folder in VS Code and use Live Server on `index.html`.
+
