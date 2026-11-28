@@ -3,7 +3,7 @@ create table runs (
   created_at timestamptz default now(),
   type text,
   photo_url text,
-  curve jsonb,
+  curve json,
   status text default 'uploaded'
 );
 
