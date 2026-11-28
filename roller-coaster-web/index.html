@@ -22,6 +22,7 @@
   <br><br>
 
   <button id="uploadBtn">Upload</button>
+  <button id="latestBtn">Show latest curve</button>
 
   <p id="msg">Ready.</p>
 
@@ -35,6 +36,7 @@
     const typeInput = document.getElementById('type');
     const photoInput = document.getElementById('photo');
     const uploadBtn = document.getElementById('uploadBtn');
+    const latestBtn = document.getElementById('latestBtn');
     const msg = document.getElementById('msg');
     const canvas = document.getElementById('curveChart');
 
@@ -43,6 +45,27 @@
 
     const HIGHEST_POWER_FIRST = true;
 
+    function parseCurve(curve) {
+      if (typeof curve === 'string') {
+        return JSON.parse(curve);
+      }
+      return curve;
+    }
+
+    function showRow(row) {
+      if (!row.curve) {
+        return;
+      }
+      if (row.x_max === null || row.x_max === undefined) {
+        msg.textContent = 'Curve found, but x_max is missing, so I can\'t draw it yet.';
+        return;
+      }
+      const coeffs = parseCurve(row.curve);
+      const xMin = (row.x_min === null || row.x_min === undefined) ? 0 : row.x_min;
+      msg.textContent = 'Curve ready!';
+      drawCurve(coeffs, xMin, row.x_max);
+    }
+
     function drawCurve(coefficients, xMin, xMax) {
       let coeffs = coefficients;
       if (!HIGHEST_POWER_FIRST) {
@@ -50,7 +73,7 @@
       }
 
       const chartPoints = [];
-      const steps = 100;
+      const steps = 200;
 
       for (let i = 0; i <= steps; i++) {
         const x = xMin + (xMax - xMin) * (i / steps);
@@ -93,17 +116,36 @@
           (payload) => {
             const updatedRow = payload.new;
 
-            if (updatedRow.status === 'processing') {
+            if (updatedRow.curve) {
+              showRow(updatedRow);
+            } else if (updatedRow.status === 'processing') {
               msg.textContent = 'The Pi is detecting the curve...';
-            }
-
-            if (updatedRow.status === 'done' && updatedRow.curve) {
-              msg.textContent = 'Curve ready!';
-              drawCurve(updatedRow.curve, updatedRow.x_min, updatedRow.x_max);
             }
           })
         .subscribe();
     }
+
+    latestBtn.addEventListener('click', async () => {
+      msg.textContent = 'Loading latest curve...';
+
+      const { data: rows, error } = await sb
+        .from('runs')
+        .select('*')
+        .not('curve', 'is', null)
+        .order('id', { ascending: false })
+        .limit(1);
+
+      if (error) {
+        msg.textContent = 'Database error: ' + error.message;
+        return;
+      }
+      if (rows.length === 0) {
+        msg.textContent = 'No curves in the database yet.';
+        return;
+      }
+
+      showRow(rows[0]);
+    });
 
     uploadBtn.addEventListener('click', async () => {
       const file = photoInput.files[0];
